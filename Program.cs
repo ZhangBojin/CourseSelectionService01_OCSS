@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using CourseSelectionService01_OCSS.Infrastructure.RabbitMq;
 using StackExchange.Redis;
+using CourseSelectionService01_OCSS.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CourseSelectionServiceOCSSDb>(opt =>
 {
     opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+builder.Services.AddDbContext<CourseServicesDbContext>(opt =>
+{
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("CourseServiceConn"));
 });
 #endregion
 
@@ -52,6 +58,10 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 });
 #endregion
 
+#region CourseInit
+builder.Services.AddScoped<CacheInitializationService>();
+#endregion
+
 #region ≈‰÷√Consul
 builder.Services.AddSingleton<IConsulClient, ConsulClient>(client =>
 {
@@ -72,6 +82,13 @@ var consulClient = app.Services.GetRequiredService<IConsulClient>();
 var config = app.Services.GetService<IConfiguration>();
 var consulServiceRegistration = new ConsulServiceRegistration(consulClient, config!);
 await consulServiceRegistration.RegisterServiceAsync();
+
+using (var scope = app.Services.CreateScope())
+{
+    var cacheInitializationService = scope.ServiceProvider.GetService<CacheInitializationService>();
+    await cacheInitializationService!.Init();
+}
+
 
 if (app.Environment.IsDevelopment())
 {
