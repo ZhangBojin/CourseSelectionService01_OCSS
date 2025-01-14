@@ -26,6 +26,12 @@ public class RabbitMqProducer
             exclusive: false,
             autoDelete: false,
             arguments: null);
+
+        _channel.QueueDeclare(queue: "CourseSelection",
+            durable: false,
+            exclusive: false,
+            autoDelete: false,
+            arguments: null);
     }
     ~RabbitMqProducer()
     {
@@ -42,6 +48,15 @@ public class RabbitMqProducer
         var jsonMessage = JsonConvert.SerializeObject(log);
         var body = Encoding.UTF8.GetBytes(jsonMessage);
 
+        _channel.BasicPublish(exchange: "",
+            routingKey: "Logs",
+            basicProperties: null,
+            body: body);
+    }
+
+    public void SelectConfirmMq(int id)
+    {
+        var body = Encoding.UTF8.GetBytes(id.ToString());
         _channel.BasicPublish(exchange: "",
             routingKey: "Logs",
             basicProperties: null,
