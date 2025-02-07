@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Domain\Entities\" />
     <Folder Include="Domain\IRepositories\" />
     <Folder Include="Infrastructure\RabbitMq\" />
     <Folder Include="Infrastructure\Repositories\" />

@@ -12,7 +12,7 @@ using CourseSelectionService01_OCSS.Application;
 var builder = WebApplication.CreateBuilder(args);
 
 #region 数据库上下文scoped注入
-builder.Services.AddDbContext<CourseSelectionServiceOCSSDb>(opt =>
+builder.Services.AddDbContext<CourseSelectionServiceOcssContext>(opt =>
 {
     opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
