@@ -8,6 +8,8 @@ using System.Text;
 using CourseSelectionService01_OCSS.Infrastructure.RabbitMq;
 using StackExchange.Redis;
 using CourseSelectionService01_OCSS.Application;
+using CourseSelectionService01_OCSS.Domain.IRepositories;
+using CourseSelectionService01_OCSS.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,11 @@ builder.Services.AddDbContext<CourseServicesDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("CourseServiceConn"));
 });
 #endregion
+
+#region ²Ö´¢·þÎñ×¢Èë
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+#endregion 
 
 #region ÅäÖÃJwt
 builder.Services.AddAuthentication(opt =>

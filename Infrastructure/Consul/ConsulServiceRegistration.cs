@@ -11,8 +11,8 @@ namespace CourseSelectionService01_OCSS.Infrastructure.Consul
         {
             var registration = new AgentServiceRegistration
             {
-                ID = "CourseSelectionService",
-                Name = "CourseSelectionService",
+                ID = "CourseSelectionService01",
+                Name = "CourseSelectionService01",
                 Address = _configuration.GetSection("Cpolar")["ip"],
                 Port = 80,
                 Tags = new[] { "admin", "v1" },
@@ -29,7 +29,7 @@ namespace CourseSelectionService01_OCSS.Infrastructure.Consul
 
         public async Task DeregisterServiceAsync()
         {
-            await _consulClient.Agent.ServiceDeregister("CourseSelectionService");
+            await _consulClient.Agent.ServiceDeregister("CourseSelectionService01");
         }
     }
 }

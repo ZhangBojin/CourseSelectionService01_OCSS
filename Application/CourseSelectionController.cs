@@ -1,4 +1,6 @@
-﻿using CourseSelectionService01_OCSS.Infrastructure.RabbitMq;
+﻿using CourseSelectionService01_OCSS.Domain.IRepositories;
+using CourseSelectionService01_OCSS.Infrastructure.RabbitMq;
+using CourseSelectionService01_OCSS.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,10 +10,13 @@ namespace CourseSelectionService01_OCSS.Application
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class CourseSelectionController(IConnectionMultiplexer connectionMultiplexer, RabbitMqProducer rabbitMqProducer) : ControllerBase
+    public class CourseSelectionController(IConnectionMultiplexer connectionMultiplexer, RabbitMqProducer rabbitMqProducer, IEnrollmentRepository enrollmentRepository, ICourseRepository courseRepository) : ControllerBase
     {
         private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer;
         private readonly RabbitMqProducer _rabbitMqProducer = rabbitMqProducer;
+
+        private readonly ICourseRepository _courseRepository = courseRepository;
+        private readonly IEnrollmentRepository _enrollmentRepository = enrollmentRepository;
 
         [Authorize(Roles = "学生")]
         [HttpPost]
@@ -29,13 +34,13 @@ namespace CourseSelectionService01_OCSS.Application
             var retryCount = 0;
             var lockAcquired = false;
 
-            var courseKey = $"course:{id}";
+            var userCoursesKey = $"user:{userId}:courses";
 
-            // 检查是否已经选课
-            var alreadySelected = await redis.HashExistsAsync(courseKey, userId);
-            if (alreadySelected)
+            // 检查是否已选任意课程
+            var selectedCourses = await redis.HashLengthAsync(userCoursesKey);
+            if (selectedCourses > 0)
             {
-                return StatusCode(409, "你已选过该课程，无法重复选课。");
+                return StatusCode(409, "你已选择一门课程，无法再次选课。");
             }
 
             // 尝试获取锁
@@ -71,7 +76,7 @@ namespace CourseSelectionService01_OCSS.Application
                 // 使用 Redis 原子的 INCR 命令进行自增，增加选课人数
                 await redis.HashIncrementAsync(id, "CurrentNum", 1);
 
-                await redis.HashSetAsync(courseKey, userId, true);
+                await redis.HashSetAsync(userCoursesKey, id, true);
 
                 _rabbitMqProducer.SelectConfirmMq(Convert.ToInt32(userId), Convert.ToInt32(id));
 
@@ -85,6 +90,18 @@ namespace CourseSelectionService01_OCSS.Application
             {
                 await redis.KeyDeleteAsync(lockKey);
             }
+        }
+
+        [Authorize(Roles = "学生")]
+        [HttpPost]
+        public async Task<IActionResult> GetMyCourse()
+        {
+            var userClaims = User.Claims;
+            var userId = userClaims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
+            var data = await _courseRepository.GetMyCourseInfo(await _enrollmentRepository.GetMyCourseId(Convert.ToInt32(userId)));
+
+            return Ok(data);
         }
     }
 }

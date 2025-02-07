@@ -1,14 +1,17 @@
-﻿using CourseSelectionService01_OCSS.Infrastructure.EfCore;
+﻿using CourseSelectionService01_OCSS.Domain.IRepositories;
+using CourseSelectionService01_OCSS.Infrastructure.EfCore;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 
 namespace CourseSelectionService01_OCSS.Application;
 
-public class CacheInitializationService(IConnectionMultiplexer connectionMultiplexer, CourseServicesDbContext context,  CourseServicesDbContext courseServicesDb, CourseSelectionServiceOcssContext courseSelectionServiceOcssDb)
+public class CacheInitializationService(IConnectionMultiplexer connectionMultiplexer, CourseServicesDbContext courseServicesDb, CourseSelectionServiceOcssContext courseSelectionServiceOcssDb
+    )
 {
     private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer;
     private readonly CourseServicesDbContext _courseServicesDb = courseServicesDb;
     private readonly CourseSelectionServiceOcssContext _courseSelectionServiceOcssDb = courseSelectionServiceOcssDb;
+   
 
     public async Task Init()
     {
@@ -37,8 +40,9 @@ public class CacheInitializationService(IConnectionMultiplexer connectionMultipl
         // 批量处理 Enrollments 数据
         tasks.AddRange(enrollments.Select(data =>
         {
-            var courseKey = $"course:{data.CoursesId}";
-            return redis.HashSetAsync(courseKey, data.UserId, true);
+            var userCoursesKey = $"user:{data.UserId}:courses";
+            return redis.HashSetAsync(userCoursesKey, data.CoursesId, true);
+
         }));
 
         // 等待所有写入任务完成
