@@ -39,26 +39,12 @@ public class RabbitMqProducer
         _connection.Close();
     }
 
-    public void Log()
+    public void SelectConfirmMq(int userId,int coursesId)
     {
-        var log = new
-        {
-          
-        };
-        var jsonMessage = JsonConvert.SerializeObject(log);
-        var body = Encoding.UTF8.GetBytes(jsonMessage);
-
+        var data= JsonConvert.SerializeObject(new { userId, coursesId ,DateTime.Now});
+        var body = Encoding.UTF8.GetBytes(data);
         _channel.BasicPublish(exchange: "",
-            routingKey: "Logs",
-            basicProperties: null,
-            body: body);
-    }
-
-    public void SelectConfirmMq(int id)
-    {
-        var body = Encoding.UTF8.GetBytes(id.ToString());
-        _channel.BasicPublish(exchange: "",
-            routingKey: "Logs",
+            routingKey: "CourseSelection",
             basicProperties: null,
             body: body);
     }

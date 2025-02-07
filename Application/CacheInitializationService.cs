@@ -15,6 +15,8 @@ public class CacheInitializationService(IConnectionMultiplexer connectionMultipl
 
         var redis=_connectionMultiplexer.GetDatabase(1);
 
+        await redis.ExecuteAsync("FLUSHDB");
+
         foreach (var data in courseAvailabilities)
         {
             var hashEntries = new HashEntry[]

@@ -1,4 +1,5 @@
 ﻿using CourseSelectionService01_OCSS.Infrastructure.RabbitMq;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using StackExchange.Redis;
@@ -12,9 +13,13 @@ namespace CourseSelectionService01_OCSS.Application
         private readonly IConnectionMultiplexer _connectionMultiplexer = connectionMultiplexer;
         private readonly RabbitMqProducer _rabbitMqProducer = rabbitMqProducer;
 
+        [Authorize(Roles = "学生")]
         [HttpPost]
         public async Task<IActionResult> SelectConfirm(string id)
         {
+            var userClaims = User.Claims;
+            var userId = userClaims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+
             var redis = _connectionMultiplexer.GetDatabase(1);
             var lockKey = $"lock:{id}"; // 锁的唯一标识，防止不同的选课项同时被加锁
             var lockTimeout = TimeSpan.FromSeconds(10); // 锁的过期时间，避免死锁 10秒
@@ -23,6 +28,15 @@ namespace CourseSelectionService01_OCSS.Application
 
             var retryCount = 0;
             var lockAcquired = false;
+
+            var courseKey = $"course:{id}";
+
+            // 检查是否已经选课
+            var alreadySelected = await redis.HashExistsAsync(courseKey, userId);
+            if (alreadySelected)
+            {
+                return StatusCode(409, "你已选过该课程，无法重复选课。");
+            }
 
             // 尝试获取锁
             while (retryCount < maxRetries)
@@ -57,7 +71,9 @@ namespace CourseSelectionService01_OCSS.Application
                 // 使用 Redis 原子的 INCR 命令进行自增，增加选课人数
                 await redis.HashIncrementAsync(id, "CurrentNum", 1);
 
-                _rabbitMqProducer.SelectConfirmMq(Convert.ToInt32(id));
+                await redis.HashSetAsync(courseKey, userId, true);
+
+                _rabbitMqProducer.SelectConfirmMq(Convert.ToInt32(userId), Convert.ToInt32(id));
 
                 return Ok();
             }
