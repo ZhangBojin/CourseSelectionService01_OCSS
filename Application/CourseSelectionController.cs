@@ -80,7 +80,7 @@ namespace CourseSelectionService01_OCSS.Application
 
                 _rabbitMqProducer.SelectConfirmMq(Convert.ToInt32(userId), Convert.ToInt32(id));
 
-                return Ok();
+                return Ok("选课成功！");
             }
             catch (Exception ex)
             {
