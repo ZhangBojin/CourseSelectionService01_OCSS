@@ -13,12 +13,12 @@ namespace CourseSelectionService01_OCSS.Infrastructure.Consul
             {
                 ID = "CourseSelectionService01",
                 Name = "CourseSelectionService01",
-                Address = _configuration.GetSection("Cpolar")["ip"],
-                Port = 80,
+                Address = "127.0.0.1",
+                Port = 10001,
                 Tags = new[] { "admin", "v1" },
                 Check = new AgentServiceCheck
                 {
-                    HTTP = $"http://{_configuration.GetSection("Cpolar")["ip"]}/Consul/Health",  // 健康检查的 HTTP 地址
+                    HTTP = $"http://localhost:10001/Consul/Health",  // 健康检查的 HTTP 地址
                     Interval = TimeSpan.FromSeconds(10), // 健康检查的执行间隔
                     DeregisterCriticalServiceAfter = TimeSpan.FromSeconds(60)// 服务被标记为“临时不可用”后的注销时间
                 }
