@@ -93,6 +93,7 @@ namespace CourseSelectionService01_OCSS.Application
         }
 
         [Authorize(Roles = "学生")]
+        //01
         [HttpPost]
         public async Task<IActionResult> GetMyCourse()
         {

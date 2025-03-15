@@ -12,7 +12,7 @@ namespace CourseSelectionService01_OCSS.Infrastructure.Consul
             var registration = new AgentServiceRegistration
             {
                 ID = "CourseSelectionService01",
-                Name = "CourseSelectionService01",
+                Name = "CourseSelectionService",
                 Address = "127.0.0.1",
                 Port = 10001,
                 Tags = new[] { "admin", "v1" },
